@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14102B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>KOPFNUSS – KI Quiz-Video Generator</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14102B; --ink2:#1E1740; --violet:#6C3BFF; --violet2:#8F6BFF;
+  --buzz:#FFD52E; --buzz2:#FFB800; --mint:#2EE6A8; --coral:#FF4D6D;
+  --paper:#FFF8ED; --mut:#9D93C7;
+  --radius:22px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif; background:var(--ink); color:var(--paper);
+  background-image:
+    radial-gradient(900px 500px at 85% -10%, rgba(108,59,255,.35), transparent 60%),
+    radial-gradient(700px 400px at -10% 40%, rgba(255,213,46,.10), transparent 55%);
+  min-height:100dvh; padding-bottom:60px;
+}
+.wrap{max-width:520px;margin:0 auto;padding:18px 16px}
+header.hero{display:flex;flex-direction:column;align-items:center;padding:22px 2px 20px;text-align:center}
+.mark{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Archivo Black',sans-serif;font-size:46px;color:#14102B;margin-bottom:12px;
+  background:radial-gradient(circle at 35% 30%, #FFE873, var(--buzz) 45%, var(--buzz2) 100%);
+  box-shadow:0 6px 0 #B87E00, 0 14px 34px rgba(255,213,46,.25)}
+.logo{font-family:'Archivo Black',sans-serif;font-size:38px;letter-spacing:1px}
+.logo em{font-style:normal;color:var(--buzz)}
+.tag{font-size:11px;font-weight:800;letter-spacing:2.2px;color:var(--mut);margin-top:8px;
+  border:1px solid rgba(255,255,255,.13);border-radius:99px;padding:7px 16px;background:rgba(255,255,255,.04)}
+
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  border-radius:var(--radius);padding:16px;margin-bottom:14px;backdrop-filter:blur(10px)}
+.card h2{font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+
+
+.row{display:flex;gap:9px;flex-wrap:wrap}
+.chip{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--paper);
+  border-radius:99px;padding:9px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.chip.on{background:var(--buzz);color:var(--ink);border-color:var(--buzz);font-weight:800}
+
+label.f{display:block;font-size:12px;font-weight:700;color:var(--mut);margin:12px 0 6px}
+input[type=text],input[type=password]{width:100%;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);
+  border-radius:13px;padding:12px 14px;color:var(--paper);font-size:14px;font-family:inherit;outline:none}
+input:focus{border-color:var(--violet2)}
+.hint{font-size:11px;color:var(--mut);margin-top:6px;line-height:1.45}
+
+.buzzwrap{display:flex;flex-direction:column;align-items:center;padding:22px 0 10px}
+.buzzer{width:190px;height:190px;border-radius:50%;border:none;cursor:pointer;position:relative;
+  font-family:'Archivo Black',sans-serif;font-size:22px;color:#3A2A00;letter-spacing:.5px;
+  background:radial-gradient(circle at 35% 30%, #FFE873, var(--buzz) 45%, var(--buzz2) 100%);
+  box-shadow:0 14px 0 #B87E00, 0 26px 50px rgba(0,0,0,.55), inset 0 -8px 18px rgba(0,0,0,.18);
+  transition:transform .08s, box-shadow .08s;
+}
+.buzzer:active{transform:translateY(9px);box-shadow:0 5px 0 #B87E00, 0 14px 30px rgba(0,0,0,.5), inset 0 -4px 12px rgba(0,0,0,.2)}
+.buzzer:disabled{filter:grayscale(.7) brightness(.7);cursor:wait}
+.buzzer small{display:block;font-family:'Inter';font-weight:800;font-size:11px;margin-top:5px;letter-spacing:1px}
+.ring{position:absolute;inset:-14px;border-radius:50%;border:2px dashed rgba(255,213,46,.4);animation:spin 14s linear infinite;pointer-events:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.status{min-height:22px;margin-top:16px;font-size:13px;font-weight:600;color:var(--buzz);text-align:center}
+.bar{width:100%;height:8px;background:rgba(255,255,255,.09);border-radius:99px;overflow:hidden;margin-top:10px;display:none}
+.bar.on{display:block}
+.bar i{display:block;height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--buzz));transition:width .3s}
+
+.stage{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;display:none;margin-bottom:14px}
+.stage.on{display:block}
+.stage canvas,.stage video{width:100%;display:block;aspect-ratio:9/16}
+.btn{flex:1;border:none;border-radius:15px;padding:15px 10px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+.btn.p{background:var(--buzz);color:var(--ink)}
+.btn.s{background:rgba(255,255,255,.09);color:var(--paper);border:1px solid rgba(255,255,255,.15)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);opacity:0;
+  background:var(--ink2);border:1px solid var(--violet2);color:var(--paper);padding:12px 18px;border-radius:14px;
+  font-size:13px;font-weight:600;transition:.3s;z-index:99;max-width:88vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+.copybox{display:flex;gap:8px;align-items:flex-start;background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:12px 12px;margin-bottom:4px}
+.copybox p{flex:1;font-size:13.5px;line-height:1.5;word-break:break-word}
+.copybox button{border:none;background:var(--violet);color:#fff;border-radius:9px;padding:8px 12px;
+  font-weight:800;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.vid video{width:100%;border-radius:16px;display:block;aspect-ratio:9/16;background:#000}
+.vhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-weight:800;font-size:13px}
+.rate{display:flex;gap:8px}
+.rate button{border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);border-radius:11px;
+  padding:7px 12px;font-size:17px;cursor:pointer;transition:.15s}
+.rate button.on{background:var(--violet);border-color:var(--violet2)}
+.actions{display:flex;gap:9px;margin:10px 0 4px}
+details.card{padding:0;overflow:hidden}
+summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:17px 16px;font-size:14px;font-weight:800;letter-spacing:.4px;cursor:pointer;
+  color:var(--paper);background:rgba(255,255,255,.03);transition:.15s;user-select:none}
+summary:active{background:rgba(255,255,255,.08)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';color:var(--mut);transition:.2s}
+details[open] summary::after{transform:rotate(180deg)}
+details[open] summary{border-bottom:1px solid rgba(255,255,255,.09);background:rgba(108,59,255,.12)}
+details .inner{padding:6px 16px 18px}
+summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.5px}
+@media (prefers-reduced-motion: reduce){.ring{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="mark">?</div>
+    <div class="logo">KOPF<em>NUSS</em></div>
+    <div class="tag">🤖 KI AUTO-QUIZ MAKER · TIKTOK 9:16 · v4.2</div>
+  </header>
+
+  <div class="card">
+    <h2>🎬 Anzahl Videos</h2>
+    <div class="row" id="batch">
+      <button class="chip on" data-v="1">1 Video</button>
+      <button class="chip" data-v="3">3er-Batch</button>
+      <button class="chip" data-v="5">5er-Batch</button>
+    </div>
+  </div>
+
+  <div class="buzzwrap">
+    <button class="buzzer" id="go"><span class="ring"></span>VIDEO<small>ERSTELLEN</small></button>
+    <div class="status" id="status"></div>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+  </div>
+
+  <div class="stage" id="stage"><canvas id="cv" width="1080" height="1920"></canvas></div>
+  <div id="results"></div>
+
+  <details class="card">
+    <summary>⚙️ Einstellungen</summary>
+    <div class="inner">
+    <label class="f">ElevenLabs API-Key (optional, für Premium-Stimme)</label>
+    <input type="password" id="elKey" placeholder="sk_...">
+    <label class="f">ElevenLabs Voice-ID (optional)</label>
+    <input type="text" id="elVoice" placeholder="Leer = Auto-Stimme passend zum Thema">
+    <button class="chip" id="testVoice" style="margin-top:10px">🎙️ ElevenLabs testen</button>
+    <label class="f">Pollinations-Key (optional, gratis)</label>
+    <input type="password" id="pollKey" placeholder="pk_... (von enter.pollinations.ai)">
+    <label class="f">Dein TikTok-Handle (Wasserzeichen im Video)</label>
+    <input type="text" id="handle" placeholder="@deinkanal">
+    <p class="hint">So denkt die App: Mit ElevenLabs-Key nutzt sie automatisch die Premium-Stimme. Ist kein Key da oder das Guthaben leer, springt sofort die Gratis-Stimme ein – du musst nichts umschalten.</p>
+    </div>
+  </details>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* ============ KOPFNUSS v1.0 — KI Quiz-Video Generator ============ */
+const $=s=>document.querySelector(s);
+const W=1080,H=1920,FPS=30;
+const cv=$('#cv'),ctx=cv.getContext('2d');
+
+/* ---- Sicherer Speicher (In-Memory-Fallback) ---- */
+const mem={};
+const store={
+  get(k){try{return localStorage.getItem(k)??mem[k]??null}catch(e){return mem[k]??null}},
+  set(k,v){mem[k]=v;try{localStorage.setItem(k,v)}catch(e){}}
+};
+
+/* ---- Nischen ---- */
+const NICHES=[
+ {id:'allgemein',em:'🧠',n:'Allgemeinwissen',d:'Klassiker, breite Zielgruppe',topic:'Allgemeinwissen (Geschichte, Wissenschaft, Alltag)'},
+ {id:'geo',em:'🌍',n:'Geografie',d:'Länder, Hauptstädte, Flaggen',topic:'Geografie: Länder, Hauptstädte, Rekorde, Flaggen'},
+ {id:'essen',em:'🍕',n:'Essen & Trinken',d:'Foodfacts, Herkunft, Kurioses',topic:'Essen & Trinken: Herkunft von Gerichten, Foodfacts, Kurioses'},
+ {id:'tiere',em:'🦈',n:'Tiere',d:'Rekorde & verrückte Fakten',topic:'Tiere: Rekorde, verrückte Fähigkeiten, Vergleiche'},
+ {id:'fussball',em:'⚽',n:'Fußball',d:'Rekorde, Vereine, WM',topic:'Fußball: Rekorde, Bundesliga, WM, legendäre Spieler (keine aktuellen Tagesereignisse)'},
+ {id:'filme',em:'🎬',n:'Filme & Serien',d:'Klassiker & Blockbuster',topic:'Filme & Serien: bekannte Klassiker und Blockbuster (keine Zitate, keine Songtexte)'},
+ {id:'koerper',em:'🫀',n:'Dein Körper',d:'Bio-Fakten die schocken',topic:'Der menschliche Körper: überraschende biologische Fakten'},
+ {id:'schaetzen',em:'📏',n:'Schätz mal!',d:'Zahlen raten, hohes Engagement',topic:'Schätzfragen mit überraschenden Zahlen (Antwortoptionen sind Zahlen/Größen)'},
+];
+let niche=NICHES[0], diff='mittel';
+const VOICES={
+ allgemein:{el:'pNInz6obpgDQGcFmaJgB',elName:'Adam',free:'nova'},      /* energisch, klar */
+ geo:      {el:'ErXwobaYiN019PkySvjV',elName:'Antoni',free:'fable'},   /* Erzähler, Doku-Stil */
+ essen:    {el:'21m00Tcm4TlvDq8ikWAM',elName:'Rachel',free:'shimmer'}, /* warm, genussvoll */
+ tiere:    {el:'MF3mGyEYCl7XYWbV9V6O',elName:'Elli',free:'nova'},      /* hell, begeistert */
+ fussball: {el:'TxGEqnHWrfWFTfGW9XjX',elName:'Josh',free:'onyx'},      /* dynamisch, Stadion */
+ filme:    {el:'ErXwobaYiN019PkySvjV',elName:'Antoni',free:'echo'},    /* Trailer-Vibe */
+ koerper:  {el:'21m00Tcm4TlvDq8ikWAM',elName:'Rachel',free:'alloy'},   /* seriös, klar */
+ schaetzen:{el:'pNInz6obpgDQGcFmaJgB',elName:'Adam',free:'nova'}       /* Quizmaster */
+};
+let currentVoice=VOICES.allgemein;
+function pickVoice(){currentVoice=VOICES[niche.id]||VOICES.allgemein}
+
+/* Stimmen-Umschalter entfernt – die KI entscheidet selbst (siehe tts) */
+
+/* ---- Vollautomatik: Thema + Schwierigkeit wählen ---- */
+function autoPick(){
+  const recent=JSON.parse(store.get('kn_recent')||'[]');
+  const pool=NICHES.filter(n=>!recent.includes(n.id));
+  niche=(pool.length?pool:NICHES)[Math.floor(Math.random()*(pool.length?pool.length:NICHES.length))];
+  recent.push(niche.id);store.set('kn_recent',JSON.stringify(recent.slice(-4)));
+  diff=['leicht','mittel','mittel','schwer'][Math.floor(Math.random()*4)];
+}
+
+/* Eingaben merken */
+['elKey','elVoice','handle','pollKey'].forEach(id=>{
+  const el=$('#'+id);el.value=store.get('kn_'+id)||'';
+  el.addEventListener('input',()=>store.set('kn_'+id,el.value));
+});
+
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3200)};
+const setStatus=(m,p)=>{$('#status').textContent=m;const b=$('#bar');
+  if(p==null){b.classList.remove('on')}else{b.classList.add('on');$('#barFill').style.width=p+'%'}};
+
+/* ---- Fallback-Fragen (falls KI offline) ---- */
+/* ---- Notfall-Bank (falls KI offline): 24 Fragen mit Rotation ---- */
+const FB_Q=[
+ {q:'Welches Organ verbraucht die meiste Energie?',options:['Herz','Gehirn','Leber'],correct:1,fact:'Das Gehirn frisst 20% deiner Energie – bei 2% Körpergewicht!'},
+ {q:'Welches Land hat die meisten Zeitzonen?',options:['Russland','USA','Frankreich'],correct:2,fact:'Frankreich! Dank Überseegebieten: 12 Zeitzonen.'},
+ {q:'Wie lange kann eine Schnecke schlafen?',options:['3 Tage','3 Wochen','3 Jahre'],correct:2,fact:'Bis zu 3 Jahre Trockenstarre!'},
+ {q:'Was war zuerst da?',options:['Feuerzeug','Streichholz','Beide gleichzeitig'],correct:0,fact:'Das Feuerzeug kam vor dem modernen Streichholz!'},
+ {q:'Wie viele Herzen hat ein Oktopus?',options:['1','3','5'],correct:1,fact:'Drei Herzen – zwei nur für die Kiemen.'},
+ {q:'Welches Tier kann nicht rückwärts gehen?',options:['Känguru','Pinguin','Nilpferd'],correct:0,fact:'Kängurus blockiert der eigene Schwanz!'},
+ {q:'Woraus bestand die erste Zahnbürste?',options:['Schweineborsten','Pferdehaar','Stroh'],correct:0,fact:'China, 1498: Schweineborsten auf Bambus.'},
+ {q:'Wie schnell wächst dein Haar pro Monat?',options:['0,5 cm','1,25 cm','3 cm'],correct:1,fact:'Etwa 1,25 cm – 15 cm im Jahr!'},
+ {q:'Welche Farbe hatte Cola ursprünglich?',options:['Grün','Braun','Gelblich'],correct:1,fact:'Cola war nie grün – das ist ein Mythos!'},
+ {q:'Wie viele Muskeln nutzt du beim Lächeln?',options:['5','17','43'],correct:1,fact:'Rund 17 – Stirnrunzeln braucht mehr!'},
+ {q:'Welcher Planet hat die meisten Monde?',options:['Jupiter','Saturn','Neptun'],correct:1,fact:'Saturn führt mit über 140 Monden!'},
+ {q:'Was ist das meistverkaufte Gewürz der Welt?',options:['Pfeffer','Zimt','Vanille'],correct:0,fact:'Pfeffer – das schwarze Gold der Antike.'},
+ {q:'Wie viel Prozent der Erde sind Ozean?',options:['50%','71%','85%'],correct:1,fact:'71% – und nur 5% davon sind erforscht!'},
+ {q:'Welches Tier schläft am wenigsten?',options:['Giraffe','Elefant','Delfin'],correct:0,fact:'Giraffen: oft nur 30 Minuten pro Tag!'},
+ {q:'Wo wurde die Currywurst erfunden?',options:['Hamburg','Berlin','Bochum'],correct:1,fact:'Berlin 1949, Herta Heuwer, Imbiss an der Kantstraße.'},
+ {q:'Wie viele Knochen hat ein Baby mehr als du?',options:['20','60','über 90'],correct:2,fact:'Babys: ~300 Knochen, Erwachsene: 206!'},
+ {q:'Was kann ein Gecko, was du nicht kannst?',options:['Farben hören','An Glas laufen','Rückwärts sehen'],correct:1,fact:'Millionen Härchen an den Füßen machen es möglich.'},
+ {q:'Welches Land isst am meisten Käse pro Kopf?',options:['Frankreich','Dänemark','Griechenland'],correct:1,fact:'Dänemark schlägt Frankreich knapp!'},
+ {q:'Wie oft blinzelst du pro Tag?',options:['1.200 mal','14.000 mal','28.000 mal'],correct:1,fact:'Rund 14.000 mal – 10% deiner Wachzeit ist dunkel!'},
+ {q:'Welcher Fluss ist der längste der Welt?',options:['Amazonas','Nil','Jangtse'],correct:1,fact:'Der Nil – aber der Amazonas führt mehr Wasser als die nächsten 7 zusammen.'},
+ {q:'Was wiegt eine Wolke ungefähr?',options:['Nichts','500 Tonnen','5 Tonnen'],correct:1,fact:'Eine Schönwetterwolke wiegt ~500 Tonnen!'},
+ {q:'Wie lange dauerte der kürzeste Krieg der Geschichte?',options:['38 Minuten','4 Stunden','2 Tage'],correct:0,fact:'England vs. Sansibar, 1896: 38 Minuten.'},
+ {q:'Welches Obst hat mehr Vitamin C als Orangen?',options:['Banane','Paprika','Apfel'],correct:1,fact:'Paprika hat 3x mehr Vitamin C!'},
+ {q:'Wie heiß ist ein Blitz?',options:['3.000 °C','10.000 °C','30.000 °C'],correct:2,fact:'5x heißer als die Sonnenoberfläche!'}
+];
+const FB_HOOKS=['Nur 1% schafft alle 3! 🧠','Trau dich – 3 Fragen! 🔥','Schaffst du mehr als deine Freunde? 👀','3 Fragen. Keine Gnade. 🧠','Dein Gehirn gegen diese 3 Fragen! ⚡'];
+function pickFallback(){
+  let usedFb=JSON.parse(store.get('kn_fbUsed')||'[]');
+  let pool=FB_Q.map((_,i)=>i).filter(i=>!usedFb.includes(i));
+  if(pool.length<3){usedFb=[];pool=FB_Q.map((_,i)=>i)}
+  const pick=[];
+  while(pick.length<3){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0];pick.push(k)}
+  store.set('kn_fbUsed',JSON.stringify(usedFb.concat(pick)));
+  return {
+    hook:FB_HOOKS[Math.floor(Math.random()*FB_HOOKS.length)],
+    cta:'Wie viele hattest du richtig? Schreib es in die Kommentare! 👇',
+    title:'Nur 1% schafft dieses Quiz 🧠 Du auch?',
+    description:'3 Fragen, 3 Sekunden Zeit – wie viele schaffst du?',
+    hashtags:['#fyp','#fürdich','#viral','#quiz','#wissen','#quiztime','#lernen','#fakten','#rätsel','#challenge'],
+    questions:pick.map(i=>FB_Q[i])
+  };
+}
+const FALLBACK={
+ hook:'Nur 1% schafft alle 3 Fragen! 🧠',
+ cta:'Wie viele hattest du richtig? Schreib es in die Kommentare! 👇',
+ title:'Nur 1% schafft dieses Quiz 🧠 Du auch?',
+ description:'3 Fragen, 4 Sekunden Zeit – wie viele schaffst du?',
+ hashtags:['#fyp','#fürdich','#viral','#quiz','#wissen','#quiztime','#lernen','#fakten','#rätsel','#challenge'],
+ questions:[
+  {q:'Welches Organ verbraucht die meiste Energie in deinem Körper?',options:['Herz','Gehirn','Leber'],correct:1,fact:'Das Gehirn frisst ca. 20% deiner Energie – bei nur 2% Körpergewicht!'},
+  {q:'Welches Land hat die meisten Zeitzonen?',options:['Russland','USA','Frankreich'],correct:2,fact:'Frankreich! Dank Überseegebieten: 12 Zeitzonen.'},
+  {q:'Wie lange kann eine Schnecke schlafen?',options:['3 Tage','3 Wochen','3 Jahre'],correct:2,fact:'Bis zu 3 Jahre – bei Trockenheit fällt sie in Starre.'}
+ ]
+};
+
+/* ---- KI: Fragen generieren (Pollinations gratis, Claude als Fallback) ---- */
+async function askClaude(prompt){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+      messages:[{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('Claude-API '+r.status);
+  const d=await r.json();
+  return d.content.map(c=>c.text||'').join('');
+}
+async function generateQuiz(){
+  const used=JSON.parse(store.get('kn_used')||'[]');
+  const goodHooks=JSON.parse(store.get('kn_goodHooks')||'[]');
+  const diffTxt={leicht:'leicht (jeder sollte 2/3 schaffen)',mittel:'mittel-knifflig (überraschend, aber machbar)',schwer:'sehr schwer, "Nur 1% schafft das"-Niveau'}[diff];
+  const angles=['überraschende Rekorde','Ursprünge und Herkunft','Irrtümer, die fast alle glauben','verrückte Vergleiche','Zahlen, die schocken','Alltags-Dinge, über die keiner nachdenkt','historische Wendepunkte','die Wissenschaft dahinter'];
+  const angle=angles[Math.floor(Math.random()*angles.length)];
+  const prompt=`Du bist Autor für virale deutsche TikTok-Quiz-Videos.
+Erstelle ein Quiz zum Thema: ${niche.topic}.
+Fokus-Winkel für dieses Quiz: ${angle}.
+Schwierigkeit: ${diffTxt}.
+Regeln:
+- Genau 3 Fragen, jede mit genau 3 kurzen Antwortoptionen (max 4 Wörter pro Option).
+- Fragen kurz (max 12 Wörter), Fakten müssen korrekt sein.
+- KEINE Standard-Klassiker (keine "Hauptstadt von..."-Basics) – überrasche selbst Quiz-Fans.
+- Frage 3 ist die schwerste.
+- "fact" = kurze überraschende Auflösung (max 15 Wörter).
+- Hook: reißerisch, max 8 Wörter, MUSS themenspezifisch sein. VERBOTEN: "Nur 1% schafft..." als Hook – das ist abgenutzt.
+- WICHTIG: Der Hook MUSS inhaltlich zu den 3 Fragen passen – am besten teasert er die überraschendste der 3 Fragen an. NIEMALS etwas ankündigen, das in den Fragen nicht vorkommt.
+- "title": viraler TikTok-Titel, max 60 Zeichen, neugierig machend, mit 1 Emoji.
+- "description": 1 kurzer Satz Caption, endet mit einer Frage an die Zuschauer.
+- "hashtags": genau 10 Hashtags (klein, ohne Leerzeichen): Mix aus viral (#fyp #fürdich #viral #quiz #wissen) und 5 themenspezifischen.
+${used.length?'- Vermeide diese bereits genutzten Fragen: '+used.slice(-25).join(' | '):''}
+${goodHooks.length?'- Diese Hooks kamen beim Publikum sehr gut an – orientiere dich an ihrem Stil: '+goodHooks.slice(-6).join(' | '):''}
+Antworte NUR mit validem JSON, ohne Markdown, exakt in diesem Format:
+{"hook":"...","cta":"Wie viele hattest du richtig? Kommentare! 👇","title":"...","description":"...","hashtags":["#fyp","..."],"questions":[{"q":"...","options":["...","...","..."],"correct":0,"fact":"..."}]}`;
+  let txt;
+  /* 1) POST-Weg (gleicher Endpoint wie die funktionierende Stimme) */
+  try{
+    const headers={'Content-Type':'application/json'};
+    const pk=$('#pollKey').value.trim();
+    if(pk)headers['Authorization']='Bearer '+pk;
+    const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',headers,
+      body:JSON.stringify({model:'openai',messages:[{role:'user',content:prompt}],seed:Math.floor(Math.random()*1e6)})});
+    if(!r.ok)throw new Error('POST '+r.status);
+    const d=await r.json();
+    txt=d?.choices?.[0]?.message?.content;
+    if(!txt)throw new Error('leere Antwort');
+  }catch(e1){
+    console.warn('POST fehlgeschlagen:',e1.message);
+    /* 2) Alter GET-Weg */
+    try{
+      const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai&seed='+Math.floor(Math.random()*1e6));
+      if(!r.ok)throw new Error('GET '+r.status);
+      txt=await r.text();
+    }catch(e2){
+      console.warn('GET fehlgeschlagen:',e2.message);
+      /* 3) NEUE unified API gen.pollinations.ai (geht auch ohne Key) */
+      try{
+        const pk=$('#pollKey').value.trim();
+        const u='https://gen.pollinations.ai/text/'+encodeURIComponent(prompt)+'?model=openai'+(pk?'&key='+encodeURIComponent(pk):'');
+        const r=await fetch(u);
+        if(!r.ok)throw new Error('gen-API '+r.status);
+        txt=await r.text();
+      }catch(e3){
+        console.warn('gen-API fehlgeschlagen:',e3.message);
+        /* 4) Claude (funktioniert in der Claude-Vorschau) */
+        txt=await askClaude(prompt);
+      }
+    }
+  }
+  txt=txt.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();
+  const i=txt.indexOf('{');const j=txt.lastIndexOf('}');
+  const data=JSON.parse(txt.slice(i,j+1));
+  if(!data.questions||data.questions.length<3)throw new Error('Ungültige KI-Antwort');
+  data.questions=data.questions.slice(0,3).map(q=>({q:String(q.q),options:q.options.slice(0,3).map(String),
+    correct:Math.min(2,Math.max(0,q.correct|0)),fact:String(q.fact||'')}));
+  data.title=String(data.title||FALLBACK.title);
+  data.description=String(data.description||FALLBACK.description);
+  data.hashtags=Array.isArray(data.hashtags)&&data.hashtags.length?data.hashtags.map(String):FALLBACK.hashtags;
+  used.push(...data.questions.map(q=>q.q.slice(0,50)));
+  store.set('kn_used',JSON.stringify(used.slice(-120)));
+  return data;
+}
+
+/* ---- Audio: TTS ---- */
+let AC;
+const ac=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+async function ttsFree(text,v){
+  const voice=(v||currentVoice).free;
+  const spoken='Du bist ein deutscher Muttersprachler und Quizmaster. Sprich den folgenden Text auf Deutsch, mit perfekter deutscher Aussprache, natürlich und energiegeladen. Füge nichts hinzu und lasse nichts weg: '+text;
+  let lastErr;
+  /* 1) Neuer Weg: POST an text.pollinations.ai/openai (Base64-Audio) */
+  try{
+    const r=await fetch('https://text.pollinations.ai/openai',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'openai-audio',modalities:['text','audio'],
+        audio:{voice:voice,format:'mp3'},
+        messages:[{role:'user',content:spoken}]})});
+    if(r.ok){
+      const d=await r.json();
+      const b64=d?.choices?.[0]?.message?.audio?.data;
+      if(b64){
+        const bin=atob(b64),buf=new Uint8Array(bin.length);
+        for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+        return await ac().decodeAudioData(buf.buffer);
+      }
+    }
+    lastErr='POST '+r.status;
+  }catch(e){lastErr=e.message}
+  /* 2) Alter GET-Weg (falls noch aktiv) */
+  try{
+    const u='https://text.pollinations.ai/'+encodeURIComponent(spoken)+'?model=openai-audio&voice='+voice+'&seed='+Math.floor(Math.random()*1e6);
+    const r=await fetch(u);
+    if(r.ok)return await ac().decodeAudioData(await r.arrayBuffer());
+    lastErr='GET '+r.status;
+  }catch(e){lastErr=e.message}
+  /* 3) Neue gen-API (auch ohne Key möglich, mit Key zuverlässiger) */
+  try{
+    const pk=$('#pollKey').value.trim();
+    const r=await fetch('https://gen.pollinations.ai/audio/'+encodeURIComponent(spoken)+'?voice='+voice+(pk?'&key='+encodeURIComponent(pk):''));
+    if(r.ok)return await ac().decodeAudioData(await r.arrayBuffer());
+    lastErr='gen-API '+r.status;
+  }catch(e){lastErr=e.message}
+  const hint=String(lastErr).includes('402')
+    ?'Pollinations-Limit erschöpft (Gratis-Key: 1 Pollen/Stunde) – kurz warten oder ElevenLabs nutzen.'
+    :'Tipp: Gratis-Key von enter.pollinations.ai in den Einstellungen eintragen.';
+  throw new Error('Gratis-Stimme: '+lastErr+'. '+hint);
+}
+async function ttsEleven(text,v,retryVoice){
+  const key=$('#elKey').value.trim();
+  const vid=retryVoice||$('#elVoice').value.trim()||(v||currentVoice).el; /* leer = Auto-Voice zum Thema */
+  if(!key)throw new Error('ElevenLabs API-Key fehlt');
+  /* Turbo zuerst: stabilste Aussprache bei kurzen Sätzen + nur halbe Credits */
+  const models=['eleven_turbo_v2_5','eleven_multilingual_v2','eleven_v3'];
+  let lastMsg='';
+  for(const model of models){
+    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+vid,{method:'POST',
+      headers:{'xi-api-key':key,'Content-Type':'application/json'},
+      body:JSON.stringify({text,model_id:model,voice_settings:{stability:.45,similarity_boost:.8}})});
+    if(r.ok)return ac().decodeAudioData(await r.arrayBuffer());
+    try{const err=await r.json();lastMsg=err?.detail?.message||err?.detail?.status||JSON.stringify(err).slice(0,120)}
+    catch(e){lastMsg='HTTP '+r.status}
+    console.warn('ElevenLabs',model,vid,'fehlgeschlagen:',r.status,lastMsg);
+    /* Bei Quota-Fehlern bringt ein anderes Modell nichts – sofort abbrechen */
+    if(String(lastMsg).toLowerCase().includes('quota'))break;
+  }
+  /* Rettungsanker: Themen-Stimme existiert evtl. nicht im Konto -> mit Adam (Standard-Stimme) erneut versuchen */
+  const ADAM='pNInz6obpgDQGcFmaJgB';
+  if(!retryVoice&&vid!==ADAM&&!String(lastMsg).toLowerCase().includes('quota')){
+    console.warn('Versuche Standard-Stimme Adam…');
+    return ttsEleven(text,v,ADAM);
+  }
+  throw new Error('ElevenLabs: '+lastMsg);
+}
+/* Zahlen, Einheiten + % für die Stimme eindeutschen (verhindert "one Prozent", "nine thousand km") */
+function zahlwort(x){
+  const n=Math.floor(+x);if(!isFinite(n)||n<0||n>999999)return String(x);
+  const E=['null','eins','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn','elf','zwölf','dreizehn','vierzehn','fünfzehn','sechzehn','siebzehn','achtzehn','neunzehn'];
+  const Z=['','zehn','zwanzig','dreißig','vierzig','fünfzig','sechzig','siebzig','achtzig','neunzig'];
+  const two=(v,comp)=>{
+    if(v===0)return'';
+    if(v===1)return comp?'ein':'eins';
+    if(v<20)return E[v];
+    const r=v%10,t=Math.floor(v/10);
+    return (r?(r===1?'ein':E[r])+'und':'')+Z[t];
+  };
+  if(n===0)return'null';
+  const t=Math.floor(n/1000),h=Math.floor((n%1000)/100),rest=n%100;
+  let s='';
+  if(t)s+=two(t,true)+'tausend';
+  if(h)s+=(h===1?'ein':E[h])+'hundert';
+  s+=two(rest,false);
+  return s;
+}
+function spokenClean(t){
+  return String(t)
+    .replace(/(\d)\.(\d{3})\b/g,'$1$2')                    /* 10.000 -> 10000 */
+    .replace(/(\d),(\d)/g,'$1 Komma $2')                   /* 1,5 -> 1 Komma 5 */
+    .replace(/(\d+)\s*%/g,(m,n)=>(+n===1?'ein':zahlwort(n))+' Prozent')
+    .replace(/(\d+)\s*km\/h\b/gi,'$1 Kilometer pro Stunde')
+    .replace(/(\d+)\s*km²/gi,'$1 Quadratkilometer')
+    .replace(/(\d+)\s*km\b/gi,'$1 Kilometer')
+    .replace(/(\d+)\s*kg\b/gi,'$1 Kilogramm')
+    .replace(/(\d+)\s*cm\b/gi,'$1 Zentimeter')
+    .replace(/(\d+)\s*mm\b/gi,'$1 Millimeter')
+    .replace(/(\d+)\s*m²/gi,'$1 Quadratmeter')
+    .replace(/(\d+)\s*(m|Meter)\b/g,'$1 Meter')
+    .replace(/(\d+)\s*g\b/g,'$1 Gramm')
+    .replace(/(\d+)\s*l\b/g,'$1 Liter')
+    .replace(/°\s*C/g,' Grad Celsius')
+    .replace(/\b(\d{1,6})\b/g,(m,n)=>zahlwort(n));
+}
+/* AUTO-ENTSCHEIDUNG: ElevenLabs wenn Key da – bei Fehler/leerem Guthaben sofort Gratis-Stimme */
+let elevenDown=false,elevenReason='';
+async function tts(t,v){
+  const clean=spokenClean(t);
+  const key=$('#elKey').value.trim();
+  if(key&&!elevenDown){
+    try{return await ttsEleven(clean,v)}
+    catch(e){elevenDown=true;elevenReason=String(e.message).slice(0,70);
+      toast('⭐→🆓 ElevenLabs: '+elevenReason+' – Gratis-Stimme übernimmt.')}
+  }
+  try{return await ttsFree(clean,v)}
+  catch(e){
+    const el=key?(' | ElevenLabs vorher: '+(elevenReason||'übersprungen')):' | Kein ElevenLabs-Key eingetragen!';
+    throw new Error(e.message+el);
+  }
+}
+/* Snapshot der Nische fürs Rendering (Pipeline kann parallel schon die nächste wählen) */
+let vNiche=NICHES[0];
+
+/* Sound-Effekte synthetisch (kostenlos, offline) */
+function beep(dest,when,freq,dur,vol,type='square'){
+  const o=ac().createOscillator(),g=ac().createGain();
+  o.type=type;o.frequency.value=freq;
+  g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(vol,when+.015);
+  g.gain.exponentialRampToValueAtTime(.0001,when+dur);
+  o.connect(g);g.connect(dest);o.start(when);o.stop(when+dur+.05);
+}
+
+/* ---- Canvas-Zeichnung ---- */
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function wrap(text,x,y,maxW,lh,font,color,align='center'){
+  ctx.font=font;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='top';
+  const words=String(text).split(' ');let line='',lines=[];
+  for(const w of words){const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t}
+  lines.push(line);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));
+  return lines.length*lh;
+}
+const BLOBS=Array.from({length:7},(_,i)=>({x:Math.random()*W,y:Math.random()*H,r:120+Math.random()*180,
+  s:.2+Math.random()*.5,hue:i%2?270:48}));
+function bg(t){
+  const g=ctx.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#241457');g.addColorStop(.55,'#14102B');g.addColorStop(1,'#0C0A1E');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  BLOBS.forEach((b,i)=>{
+    const y=(b.y+t*40*b.s)%(H+400)-200, x=b.x+Math.sin(t*b.s+i)*60;
+    const rg=ctx.createRadialGradient(x,y,0,x,y,b.r);
+    const c=b.hue===270?'138,96,255':'255,213,46';
+    rg.addColorStop(0,`rgba(${c},.16)`);rg.addColorStop(1,`rgba(${c},0)`);
+    ctx.fillStyle=rg;ctx.beginPath();ctx.arc(x,y,b.r,0,7);ctx.fill();
+  });
+}
+function watermark(){
+  const h=$('#handle').value.trim();if(!h)return;
+  ctx.font='800 34px Inter';ctx.fillStyle='rgba(255,248,237,.55)';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(h,W/2,H-150);
+}
+function pill(x,y,w,h,label,text,state){ /* state: 0 normal, 1 correct, 2 dim */
+  ctx.save();
+  if(state===1){ctx.shadowColor='#2EE6A8';ctx.shadowBlur=45}
+  roundRect(x,y,w,h,h/2);
+  ctx.fillStyle=state===1?'#2EE6A8':state===2?'rgba(255,255,255,.06)':'rgba(255,255,255,.10)';
+  ctx.fill();ctx.shadowBlur=0;
+  ctx.lineWidth=3;ctx.strokeStyle=state===1?'#2EE6A8':'rgba(255,255,255,.22)';ctx.stroke();
+  ctx.beginPath();ctx.arc(x+h/2,y+h/2,h/2-16,0,7);
+  ctx.fillStyle=state===1?'#0B3B2A':'#FFD52E';ctx.fill();
+  ctx.font='900 44px Inter';ctx.fillStyle=state===1?'#2EE6A8':'#14102B';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x+h/2,y+h/2+2);
+  ctx.font='800 46px Inter';ctx.fillStyle=state===2?'rgba(255,248,237,.35)':state===1?'#08251B':'#FFF8ED';
+  ctx.textAlign='left';
+  let txt=text;while(ctx.measureText(txt).width>w-h-70&&txt.length>3)txt=txt.slice(0,-1);
+  if(txt!==text)txt+='…';
+  ctx.fillText(txt,x+h+26,y+h/2+2);
+  ctx.restore();
+}
+function confetti(localT){
+  const p=Math.min(localT/1.1,1);if(p>=1)return;
+  const cols=['#2EE6A8','#FFD52E','#8F6BFF','#FF4D6D'];
+  for(let i=0;i<30;i++){
+    const ang=i/30*6.283+(i*.71), spd=380+((i*97)%320);
+    const x=W/2+Math.cos(ang)*spd*p, y=330+Math.sin(ang)*spd*p+320*p*p;
+    ctx.save();ctx.globalAlpha=1-p;ctx.translate(x,y);ctx.rotate(ang+p*7);
+    ctx.fillStyle=cols[i%4];ctx.fillRect(-9,-13,18,26);ctx.restore();
+  }
+}
+function drawHook(t,hook,total){
+  bg(t);
+  /* Vignette: dunkle Ränder = Text knallt als TikTok-Cover */
+  const vg=ctx.createRadialGradient(W/2,H*.42,H*.22,W/2,H*.42,H*.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  const pulse=1+Math.sin(t*6)*.03;
+  ctx.save();ctx.translate(W/2,H*.27);ctx.scale(pulse,pulse);
+  ctx.font='150px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(vNiche.em,0,0);
+  ctx.restore();
+  /* Themen-Badge */
+  ctx.font='800 40px Inter';
+  const bw=ctx.measureText(vNiche.n.toUpperCase()).width+70;
+  roundRect(W/2-bw/2,H*.335,bw,74,37);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();
+  ctx.fillStyle='#FFD52E';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(vNiche.n.toUpperCase(),W/2,H*.335+39);
+  /* Hook mit Schatten – auf jedem Cover sofort lesbar */
+  ctx.save();ctx.shadowColor='rgba(0,0,0,.85)';ctx.shadowBlur=26;ctx.shadowOffsetY=8;
+  wrap(hook,W/2,H*.42,W-180,110,"900 92px 'Archivo Black'",'#FFF8ED');
+  ctx.restore();
+  roundRect(W/2-260,H*.62,520,86,43);ctx.fillStyle='#6C3BFF';ctx.fill();
+  ctx.font='800 42px Inter';ctx.fillStyle='#FFF8ED';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(`${total} FRAGEN · BIST DU BEREIT?`,W/2,H*.62+44);
+  watermark();
+}
+function drawQuestion(t,q,idx,total,phase,countLeft,localT=0){
+  bg(t);
+  ctx.font='800 40px Inter';ctx.fillStyle='#9D93C7';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(`FRAGE ${idx+1} / ${total}`,W/2,140);
+  /* Countdown-Ring */
+  if(phase==='count'){
+    const cx=W/2,cy=330,R=95,frac=countLeft%1,num=Math.ceil(countLeft);
+    ctx.lineWidth=14;ctx.strokeStyle='rgba(255,255,255,.12)';
+    ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();
+    ctx.strokeStyle=num<=1?'#FF4D6D':'#FFD52E';ctx.lineCap='round';
+    ctx.beginPath();ctx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+frac*2*Math.PI);ctx.stroke();
+    const pulse=1+.22*Math.max(0,frac-.75)*4; /* Puls beim Sekundenwechsel */
+    ctx.save();ctx.translate(cx,cy+8);ctx.scale(pulse,pulse);
+    ctx.font="900 110px 'Archivo Black'";ctx.fillStyle=num<=1?'#FF4D6D':'#FFF8ED';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(num,0,0);ctx.restore();
+  } else if(phase==='reveal'){
+    ctx.font='140px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✅',W/2,330);
+    confetti(localT);
+  } else {
+    ctx.font='140px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(vNiche.em,W/2,330);
+  }
+  /* Frage-Karte */
+  ctx.save();
+  roundRect(70,500,W-140,420,40);ctx.fillStyle='rgba(255,255,255,.07)';ctx.fill();
+  ctx.lineWidth=2;ctx.strokeStyle='rgba(255,255,255,.14)';ctx.stroke();ctx.restore();
+  ctx.font='800 62px Inter';
+  const qh=wrap(q.q,W/2,560,W-260,80,'800 62px Inter','#FFF8ED');
+  /* Optionen */
+  const labels=['A','B','C'];const oy=1010,oh=130,gap=42;
+  q.options.forEach((op,i)=>{
+    let state=0;
+    if(phase==='reveal')state=i===q.correct?1:2;
+    pill(90,oy+i*(oh+gap),W-180,oh,labels[i],op,state);
+  });
+  /* Fakt bei Auflösung */
+  if(phase==='reveal'&&q.fact){
+    wrap('💡 '+q.fact,W/2,oy+3*(oh+gap)+30,W-200,58,'600 44px Inter','#2EE6A8');
+  }
+  watermark();
+}
+function drawEnd(t,cta){
+  bg(t);
+  const pulse=1+Math.sin(t*7)*.05;
+  ctx.save();ctx.translate(W/2,H*.28);ctx.scale(pulse,pulse);
+  ctx.font='150px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('👇',0,0);
+  ctx.restore();
+  wrap(cta,W/2,H*.38,W-180,96,"900 76px 'Archivo Black'",'#FFF8ED');
+  roundRect(W/2-430,H*.64,860,96,48);ctx.fillStyle='#FFD52E';ctx.fill();
+  ctx.font='900 40px Inter';ctx.fillStyle='#14102B';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('FOLGEN FÜR DEIN TÄGLICHES QUIZ 🧠',W/2,H*.64+50);
+  watermark();
+}
+
+/* ---- Timeline bauen & rendern ---- */
+const COUNT_SECS=3, REVEAL_PAD=.6, HOOK_PAD=.4;
+function buildTimeline(quiz,audio){
+  /* Segmente: {type, dur, data, buf} */
+  const segs=[];
+  segs.push({type:'hook',dur:audio.hook.duration+HOOK_PAD,buf:audio.hook,data:{hook:quiz.hook,total:quiz.questions.length}});
+  quiz.questions.forEach((q,i)=>{
+    segs.push({type:'read',dur:audio.q[i].duration+.3,buf:audio.q[i],data:{q,i}});
+    segs.push({type:'count',dur:COUNT_SECS,data:{q,i}});
+    segs.push({type:'reveal',dur:audio.f[i]?Math.max(audio.f[i].duration+REVEAL_PAD,2.2):2.2,buf:audio.f[i],data:{q,i}});
+  });
+  segs.push({type:'end',dur:Math.max(audio.cta.duration+.6,3),buf:audio.cta,data:{cta:quiz.cta}});
+  let t=0;segs.forEach(s=>{s.start=t;t+=s.dur});
+  return {segs,total:t};
+}
+function drawAt(tl,quiz,time){
+  const s=tl.segs.find(s=>time>=s.start&&time<s.start+s.dur)||tl.segs[tl.segs.length-1];
+  const local=time-s.start,total=quiz.questions.length;
+  if(s.type==='hook')drawHook(time,s.data.hook,total);
+  else if(s.type==='read')drawQuestion(time,s.data.q,s.data.i,total,'read',0);
+  else if(s.type==='count')drawQuestion(time,s.data.q,s.data.i,total,'count',Math.max(.001,COUNT_SECS-local));
+  else if(s.type==='reveal')drawQuestion(time,s.data.q,s.data.i,total,'reveal',0,local);
+  else drawEnd(time,s.data.cta);
+  /* Fortschrittsbalken (viraler Standard: Zuschauer sehen, wie wenig noch fehlt) */
+  ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(0,0,W,14);
+  ctx.fillStyle='#FFD52E';ctx.fillRect(0,0,W*Math.min(1,time/tl.total),14);
+}
+function scheduleAudio(tl,dest,base){
+  tl.segs.forEach(s=>{
+    if(s.buf){const src=ac().createBufferSource();src.buffer=s.buf;
+      const g=ac().createGain();g.gain.value=1;src.connect(g);g.connect(dest);src.start(base+s.start)}
+    if(s.type==='count'){
+      for(let k=0;k<COUNT_SECS;k++)beep(dest,base+s.start+k,k===COUNT_SECS-1?520:880,.09,.18);
+    }
+    if(s.type==='reveal'){beep(dest,base+s.start+.05,660,.12,.22,'sine');beep(dest,base+s.start+.18,990,.25,.22,'sine')}
+  });
+}
+
+/* ---- Aufnahme (MP4 wenn möglich) ---- */
+function pickMime(){
+  const list=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm'];
+  for(const m of list){try{if(MediaRecorder.isTypeSupported(m))return m}catch(e){}}
+  return '';
+}
+let rendering=false;
+async function renderVideo(prep,idx,total){
+  const {quiz,audio}=prep;
+  vNiche=prep.job.niche;
+  await document.fonts.ready;
+  rendering=true;
+  /* Bildschirm anlassen – sonst friert die Aufnahme ein */
+  let wakeLock=null;
+  try{wakeLock=await navigator.wakeLock?.request('screen')}catch(e){}
+  const tl=buildTimeline(quiz,audio);
+  $('#stage').classList.add('on');
+  const stream=cv.captureStream(FPS);
+  const dest=ac().createMediaStreamDestination();
+  dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));
+  const mime=pickMime();const ext=mime.includes('mp4')?'mp4':'webm';
+  const rec=new MediaRecorder(stream,{mimeType:mime||undefined,videoBitsPerSecond:3_500_000});
+  const chunks=[];rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  const done=new Promise(res=>rec.onstop=res);
+  await ac().resume();
+  const base=ac().currentTime+.25;
+  scheduleAudio(tl,dest,base);
+  /* WICHTIG: ohne Timeslice aufnehmen – ein Stück = korrekte MP4-Längenangabe */
+  rec.start();
+  const t0=performance.now()+250;
+  await new Promise(res=>{
+    (function frame(){
+      const time=(performance.now()-t0)/1000;
+      if(time>=tl.total){res();return}
+      drawAt(tl,quiz,Math.max(0,time));
+      setStatus(`🎬 Video ${idx}/${total}: Rendere… ${Math.min(100,Math.round(time/tl.total*100))}%`,Math.min(100,time/tl.total*100));
+      requestAnimationFrame(frame);
+    })();
+  });
+  rec.stop();await done;
+  rendering=false;
+  try{await wakeLock?.release()}catch(e){}
+  $('#stage').classList.remove('on');
+  const blob=new Blob(chunks,{type:mime||'video/webm'});
+  if(ext!=='mp4')toast('Hinweis: Browser hat WebM erstellt – für echtes MP4 Chrome aktualisieren.');
+  return {blob,ext,secs:Math.round(tl.total)};
+}
+
+/* ---- Parallel-Helfer: max. 3 TTS-Anfragen gleichzeitig ---- */
+async function pool(tasks,run,limit=3){
+  const out=[];let i=0;
+  await Promise.all(Array.from({length:Math.min(limit,tasks.length)},async()=>{
+    while(i<tasks.length){const k=i++;out[k]=await run(tasks[k],k)}
+  }));
+  return out;
+}
+
+/* ---- Job vorbereiten: Thema wählen, Quiz schreiben, Stimme parallel erzeugen ---- */
+async function prepareJob(idx,total){
+  autoPick();pickVoice();
+  const job={niche,diff,voice:currentVoice,idx,total};
+  let quiz;
+  try{quiz=await generateQuiz()}
+  catch(e){console.warn(e);quiz=FALLBACK;
+    toast(`⚠️ KI nicht erreichbar – NOTFALL-Quiz bei Video ${idx} (immer gleich, nicht posten!)`)}
+  const texts=[{k:'hook',t:quiz.hook},
+    ...quiz.questions.flatMap((q,i)=>[
+      {k:'q'+i,t:q.q},
+      {k:'f'+i,t:'Richtig ist: '+q.options[q.correct]+'!'}]),
+    {k:'cta',t:'Wie viele hattest du richtig? Schreib es in die Kommentare! Und folge für dein tägliches Quiz!'}];
+  let doneN=0;
+  const bufs=await pool(texts,async x=>{
+    const b=await tts(x.t,job.voice);doneN++;
+    /* Nicht den Render-Fortschritt des laufenden Videos überschreiben */
+    if(!rendering)setStatus(`🎙️ Video ${idx}/${total}: Stimme ${doneN}/${texts.length}…`,10+doneN/texts.length*25);
+    return b;
+  },3);
+  const audio={q:[],f:[]};
+  texts.forEach((x,i)=>{
+    if(x.k==='hook')audio.hook=bufs[i];
+    else if(x.k==='cta')audio.cta=bufs[i];
+    else if(x.k[0]==='q')audio.q[+x.k.slice(1)]=bufs[i];
+    else audio.f[+x.k.slice(1)]=bufs[i];
+  });
+  return {quiz,audio,job};
+}
+
+/* ---- Ergebnis-Karte mit Video, Upload-Paket und Bewertung ---- */
+function addResult(res,prep){
+  const quiz=prep.quiz,job=prep.job;
+  const tags=(quiz.hashtags||[]).map(t=>t.startsWith('#')?t:'#'+t);
+  const caption=quiz.description+'\n\n'+tags.join(' ');
+  const d=document.createElement('div');d.className='card vid';
+  d.innerHTML=`
+    <div class="vhead"><span>${job.niche.em} Video ${job.idx} · ${res.secs}s · ${res.ext.toUpperCase()} · ${(res.blob.size/1e6).toFixed(1)} MB</span>
+      <span class="rate"><button data-a="up" title="Gutes Quiz">👍</button><button data-a="down" title="Schwaches Quiz">👎</button></span></div>
+    <video controls playsinline></video>
+    <div class="actions">
+      <button class="btn p" data-a="save">⬇️ Speichern</button>
+      <button class="btn s" data-a="share">📤 Teilen</button>
+    </div>
+    <label class="f">Titel</label>
+    <div class="copybox"><p data-t="title"></p><button data-a="ctitle">Kopieren</button></div>
+    <label class="f">Caption (Beschreibung + Hashtags)</label>
+    <div class="copybox"><p data-t="cap"></p><button data-a="ccap">Kopieren</button></div>`;
+  d.querySelector('video').src=URL.createObjectURL(res.blob);
+  d.querySelector('[data-t=title]').textContent=quiz.title;
+  d.querySelector('[data-t=cap]').textContent=caption;
+  d.addEventListener('click',async e=>{
+    const a=e.target.dataset.a;if(!a)return;
+    if(a==='save'){
+      const el=document.createElement('a');el.href=URL.createObjectURL(res.blob);
+      el.download='kopfnuss_'+Date.now()+'.'+res.ext;el.click();
+      toast('Gespeichert! In TikTok: + → Hochladen → Galerie.');
+    }else if(a==='share'){
+      const file=new File([res.blob],'kopfnuss.'+res.ext,{type:res.ext==='mp4'?'video/mp4':'video/webm'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'KOPFNUSS Quiz'})}
+        catch(err){if(err.name!=='AbortError')toast('Teilen fehlgeschlagen – nutze "Speichern".')}
+      }else toast('Teilen nicht unterstützt – nutze "Speichern", dann TikTok: + → Hochladen.');
+    }else if(a==='ctitle'||a==='ccap'){
+      const txt=a==='ctitle'?quiz.title:caption;
+      try{await navigator.clipboard.writeText(txt);toast('✅ Kopiert!')}
+      catch(err){toast('Kopieren fehlgeschlagen – Text manuell markieren.')}
+    }else if(a==='up'){
+      /* LERNEN: guten Hook-Stil merken – fließt in künftige Prompts ein */
+      const good=JSON.parse(store.get('kn_goodHooks')||'[]');
+      good.push(quiz.hook);store.set('kn_goodHooks',JSON.stringify(good.slice(-10)));
+      e.target.classList.add('on');e.target.nextElementSibling?.classList.remove('on');
+      toast('👍 Gemerkt – die KI orientiert sich künftig an diesem Stil!');
+    }else if(a==='down'){
+      /* LERNEN: schwache Fragen auf die Sperrliste */
+      const used=JSON.parse(store.get('kn_used')||'[]');
+      quiz.questions.forEach(q=>used.push(q.q.slice(0,50)));
+      store.set('kn_used',JSON.stringify(used.slice(-120)));
+      e.target.classList.add('on');e.target.previousElementSibling?.classList.remove('on');
+      toast('👎 Verstanden – solche Fragen werden vermieden.');
+    }
+  });
+  $('#results').prepend(d);
+}
+
+/* ---- Batch-Auswahl ---- */
+let batchN=1;
+$('#batch').onclick=e=>{if(!e.target.dataset.v)return;batchN=+e.target.dataset.v;
+  $('#batch').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===e.target))};
+
+/* ---- ElevenLabs-Test: sofort hören, ob der Key funktioniert ---- */
+$('#testVoice').onclick=async()=>{
+  const b=$('#testVoice');
+  if(!$('#elKey').value.trim()){toast('Bitte zuerst den ElevenLabs API-Key eintragen.');return}
+  b.disabled=true;b.textContent='⏳ Teste…';
+  try{
+    ac();await ac().resume();
+    const buf=await ttsEleven(spokenClean('Perfekt! Deine ElevenLabs-Stimme funktioniert.'),VOICES.allgemein);
+    const src=ac().createBufferSource();src.buffer=buf;src.connect(ac().destination);src.start();
+    toast('✅ ElevenLabs funktioniert – wird ab jetzt bei jedem Video zuerst genutzt!');
+  }catch(e){
+    toast('❌ ElevenLabs-Fehler: '+String(e.message).slice(0,90));
+  }finally{b.disabled=false;b.textContent='🎙️ ElevenLabs testen'}
+};
+
+/* ---- Haupt-Flow: Buzzer → Pipeline ---- */
+$('#go').onclick=async()=>{
+  const go=$('#go');go.disabled=true;
+  try{
+    ac();await ac().resume();
+    elevenDown=false; /* pro Lauf neu versuchen */
+    const N=batchN;
+    toast('📱 App offen lassen, bis alle Videos fertig sind – der Bildschirm bleibt automatisch an.');
+    setStatus(`🧠 Video 1/${N}: KI schreibt…`,5);
+    let nextP=prepareJob(1,N);
+    for(let i=1;i<=N;i++){
+      const prep=await nextP;
+      /* Pipeline: nächstes Quiz + Stimme entstehen, WÄHREND dieses Video rendert */
+      if(i<N)nextP=prepareJob(i+1,N);
+      const vName=($('#elKey').value.trim()&&!elevenDown&&!$('#elVoice').value.trim())?' · 🎙️ '+prep.job.voice.elName:'';
+      toast(`🎲 Video ${i}: ${prep.job.niche.em} ${prep.job.niche.n} · ${prep.job.diff==='schwer'?'Nur 1%':prep.job.diff[0].toUpperCase()+prep.job.diff.slice(1)}${vName}`);
+      const res=await renderVideo(prep,i,N);
+      addResult(res,prep);
+    }
+    setStatus(N>1?`✅ Batch fertig: ${N} Videos unten – speichern & posten!`:'✅ Fertig! Dein Video ist unten.',null);
+    window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+  }catch(e){
+    console.error(e);setStatus('',null);toast('Fehler: '+e.message);
+  }finally{go.disabled=false}
+};
+
+/* ---- PWA: Service Worker registrieren (echte App-Installation) ---- */
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW:',e));
+}
+</script>
+</body>
+</html>
